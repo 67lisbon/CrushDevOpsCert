@@ -1,0 +1,49 @@
+import boto3
+import logging
+import json
+import requests
+import os
+from datetime import datetime
+
+s3 = boto3.resource('s3')
+
+logging.basicConfig()
+logger = logging.getLogger()
+logger.setLevel('INFO')
+
+env = os.environ.get('env')
+group = os.environ.get('group')
+log_level = os.environ.get('log_level')
+
+
+logs = boto3.client('logs')
+success_code = [200]
+txt_data = b'Do not delete this file'
+
+def lambda_handler(event, context):
+    logger.info('Entering handler')
+    
+    results = []
+    
+    stream = datetime.now().strftime('%Y/%M/%d')
+    logger.info(f'Using log stream: {stream}')
+    
+    try:
+        object = s3.Object('aws-aws-devops-pauld', 'Paul123.txt')
+        logger.info('Found the file')
+        result = object.put(Body=txt_data)
+        logger.info('Updated the file')
+        logger.info('Build a dictionary for successful upload')
+        result = {"success": str(True)
+            }
+        
+    except BaseException as e:
+        logger.info('Failed successful upload')
+        result = {"success": str(False),
+                  "reason": str(e)
+        }
+        
+    logger.info(json.dumps(result))
+    results.append(result)
+
+    
